@@ -9,24 +9,6 @@ I wrote Network because I need the same functionality in many different places.
 
 == EXAMPLES:
 
-You can use this library in two different manners. 
-The first way when you just need to make POST or GET request with some parameters:
-  response = Network.post("http://example.com", "one=1")
-  response = Network.get("http://example.com", "one=1")
-
-The second way when need to configure HTTP connection with timeouts, ssl, etc.
-
-    connection = Network.connection("http://example.com")
-    connection.debug              = true
-    connection.pem_file           = '/secure/file.pem'
-    connection.read_timeout       = 10
-    connection.connection_timeout = 10
-    connection.headers = {
-      "Content-type" => "text/plain"
-    }
-    connection.retry = true
-    connection.retry_attempts = 3
-
 == REQUIREMENTS:
 
   Gems:
