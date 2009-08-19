@@ -1,0 +1,58 @@
+= Network
+
+== DESCRIPTION:
+
+HTTP/HTTPS communication module based on ruby net/http, net/https modules.
+Network allows you to make POST http/https requests more easy and quicker. 
+
+I wrote Network because I need the same functionality in many different places.
+
+== EXAMPLES:
+
+You can use this library in two different manners. 
+The first way when you just need to make POST or GET request with some parameters:
+  response = Network.post("http://example.com", "one=1")
+  response = Network.get("http://example.com", "one=1")
+
+The second way when need to configure HTTP connection with timeouts, ssl, etc.
+
+    connection = Network.connection("http://example.com")
+    connection.debug              = true
+    connection.pem_file           = '/secure/file.pem'
+    connection.read_timeout       = 10
+    connection.connection_timeout = 10
+    connection.headers = {
+      "Content-type" => "text/plain"
+    }
+    connection.retry = true
+    connection.retry_attempts = 3
+
+== REQUIREMENTS:
+
+  Gems:
+  * mocha #for tests
+
+== LICENSE:
+
+(The MIT License)
+
+Copyright (c) 2009 Pavel Gabriel
+
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of this software and associated documentation files (the
+'Software'), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
