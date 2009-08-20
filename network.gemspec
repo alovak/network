@@ -6,7 +6,6 @@ Gem::Specification.new do |s|
   s.author       = "Pavel Gabriel"
   s.homepage     = "http://github.com/alovak/network/"
   s.summary      = "HTTP/HTTPS communication module based on ruby net/http, net/https modules"
-  s.description  = File.read(File.join(File.dirname(__FILE__), 'README'))
   s.description  = "HTTP/HTTPS communication module based on ruby net/http, net/https modules"
   s.email        = "alovak@gmail.com"
   s.require_path = "lib"
