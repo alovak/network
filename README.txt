@@ -9,6 +9,9 @@ I wrote Network because I need the same functionality in many different places.
 
 == EXAMPLES:
 
+  connection = Network::Connection.new("http://example.com/")
+  connection.post('one=1', {'Accept' => 'text/plain'})
+
 == REQUIREMENTS:
 
   Gems:

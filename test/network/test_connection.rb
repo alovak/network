@@ -69,12 +69,12 @@ class TestConnection < Test::Unit::TestCase
   end
 
   def test_default_ssl_verify_mode
-    assert_equal Network::Connection::VERIFY_MODE, @connection.verify_mode
+    assert_equal false, @connection.verify_peer
   end
 
-  def test_ssl_verify_mode_param
-    @connection.verify_mode = OpenSSL::SSL::VERIFY_PEER
-    assert_equal OpenSSL::SSL::VERIFY_PEER, @connection.verify_mode
+  def test_ssl_verify_peer_mode
+    @connection.verify_peer = true
+    assert_equal true, @connection.verify_peer
   end
 
   def test_set_client_ssl_certificate
@@ -100,9 +100,19 @@ class TestConnection < Test::Unit::TestCase
     end
   end
 
-  def test_ssl_configuration
+  def test_ssl_configuration_without_server_certification_verification
     @http.expects(:use_ssl=)
-    @http.expects(:verify_mode=)
+    @http.expects(:verify_mode=).with(Network::Connection::VERIFY_NONE)
+    @http.expects(:cert=)
+    @http.expects(:ca_file=).never
+    
+    @connection.send(:configure_ssl, @http)
+  end
+
+  def test_ssl_configuration_with_server_certification_verification
+    @connection.verify_peer = true
+    @http.expects(:use_ssl=)
+    @http.expects(:verify_mode=).with(Network::Connection::VERIFY_PEER)
     @http.expects(:cert=)
     @http.expects(:ca_file=)
     

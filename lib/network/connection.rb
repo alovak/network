@@ -2,18 +2,19 @@ module Network
   class Connection
     attr_reader :uri
     attr_accessor :read_timeout, :open_timeout, :headers, 
-                  :verify_mode, :client_certificate, :debugger_stream,
+                  :verify_peer, :client_certificate, :debugger_stream,
                   :ca_file
 
     READ_TIMEOUT = 60
     OPEN_TIMEOUT = 30 
-    VERIFY_MODE  = OpenSSL::SSL::VERIFY_NONE
+    VERIFY_NONE  = OpenSSL::SSL::VERIFY_NONE
+    VERIFY_PEER  = OpenSSL::SSL::VERIFY_PEER
 
     def initialize(uri)
       @uri = URI.parse(uri)
       @read_timeout = READ_TIMEOUT
       @open_timeout = OPEN_TIMEOUT
-      @verify_mode  = VERIFY_MODE
+      @verify_peer  = false
       @debugger_stream = nil
       @headers = {}
     end
@@ -61,9 +62,14 @@ module Network
 
     def configure_ssl(http)
       http.use_ssl     = true
-      http.verify_mode = verify_mode
-      http.cert        = client_certificate
-      http.ca_file     = ca_file
+      http.cert = client_certificate
+
+      if verify_peer
+        http.verify_mode = VERIFY_PEER
+        http.ca_file     = ca_file
+      else
+        http.verify_mode = VERIFY_NONE
+      end
     end
 
     def configure_timeouts(http)
