@@ -1,9 +1,10 @@
 module Network
   class Connection
-    attr_reader :uri
+    attr_reader   :uri, :pem
+
     attr_accessor :read_timeout, :open_timeout, :headers, 
-                  :verify_peer, :client_certificate, :debugger_stream,
-                  :ca_file
+                  :verify_peer, :ca_file,
+                  :debugger_stream
 
     READ_TIMEOUT = 60
     OPEN_TIMEOUT = 30 
@@ -37,11 +38,8 @@ module Network
       @uri.scheme == "https"
     end
 
-    def client_certificate=(certificate)
-      raise(ArgumentError, "Certificate must be an instance of OpenSSL::X509::Certificate") unless 
-        certificate.instance_of? OpenSSL::X509::Certificate
-
-      @client_certificate = certificate
+    def pem_file(file)
+      @pem = File.read(file)
     end
 
     private
@@ -49,6 +47,7 @@ module Network
     def http
       http = Net::HTTP.new(uri.host, uri.port)
       configure_timeouts(http)
+      configure_debugging(http)
 
       configure_ssl(http) if use_ssl?
       http
@@ -62,7 +61,11 @@ module Network
 
     def configure_ssl(http)
       http.use_ssl     = true
-      http.cert = client_certificate
+
+      if pem
+        http.cert = cert
+        http.key  = key
+      end
 
       if verify_peer
         http.verify_mode = VERIFY_PEER
@@ -79,6 +82,14 @@ module Network
 
     def configure_debugging(http)
       http.set_debug_output(debugger_stream)
+    end
+
+    def key
+      OpenSSL::PKey::RSA.new(pem)
+    end
+
+    def cert
+      OpenSSL::X509::Certificate.new(pem)
     end
   end
 end

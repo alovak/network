@@ -77,12 +77,6 @@ class TestConnection < Test::Unit::TestCase
     assert_equal true, @connection.verify_peer
   end
 
-  def test_set_client_ssl_certificate
-    cert = OpenSSL::X509::Certificate.new
-    @connection.client_certificate = cert
-    assert_equal cert, @connection.client_certificate
-  end
-
   def test_timeouts_configuration
     @http.expects(:read_timeout=)
     @http.expects(:open_timeout=)
@@ -94,16 +88,9 @@ class TestConnection < Test::Unit::TestCase
     @connection.send(:configure_debugging, @http)
   end
 
-  def test_raise_error_if_invalid_client_certificate
-    e = assert_raise ArgumentError do
-      @connection.client_certificate = "certificate"
-    end
-  end
-
   def test_ssl_configuration_without_server_certification_verification
     @http.expects(:use_ssl=)
     @http.expects(:verify_mode=).with(Network::Connection::VERIFY_NONE)
-    @http.expects(:cert=)
     @http.expects(:ca_file=).never
     
     @connection.send(:configure_ssl, @http)
@@ -113,9 +100,18 @@ class TestConnection < Test::Unit::TestCase
     @connection.verify_peer = true
     @http.expects(:use_ssl=)
     @http.expects(:verify_mode=).with(Network::Connection::VERIFY_PEER)
-    @http.expects(:cert=)
     @http.expects(:ca_file=)
     
+    @connection.send(:configure_ssl, @http)
+  end
+
+  def test_ssl_configuration_with_client_pem_file
+    @connection.pem_file('test/test.pem')
+    @http.expects(:use_ssl=)
+    @http.expects(:cert=)
+    @http.expects(:key=)
+    @http.expects(:verify_mode=).with(Network::Connection::VERIFY_NONE)
+ 
     @connection.send(:configure_ssl, @http)
   end
 end
