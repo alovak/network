@@ -1,15 +1,20 @@
 module Network
   class Connection
     attr_reader :uri
-    attr_accessor :read_timeout, :open_timeout, :headers
+    attr_accessor :read_timeout, :open_timeout, :headers, 
+                  :verify_mode, :client_certificate, :debugger_stream,
+                  :ca_file
 
-    READ_TIMEOUT = 5
-    OPEN_TIMEOUT = 5
+    READ_TIMEOUT = 60
+    OPEN_TIMEOUT = 30 
+    VERIFY_MODE  = OpenSSL::SSL::VERIFY_NONE
 
     def initialize(uri)
       @uri = URI.parse(uri)
       @read_timeout = READ_TIMEOUT
       @open_timeout = OPEN_TIMEOUT
+      @verify_mode  = VERIFY_MODE
+      @debugger_stream = nil
       @headers = {}
     end
 
@@ -27,17 +32,47 @@ module Network
       end
     end
 
+    def use_ssl?
+      @uri.scheme == "https"
+    end
+
+    def client_certificate=(certificate)
+      raise(ArgumentError, "Certificate must be an instance of OpenSSL::X509::Certificate") unless 
+        certificate.instance_of? OpenSSL::X509::Certificate
+
+      @client_certificate = certificate
+    end
+
     private
 
-    #def http
-      #http = Net::HTTP.new(uri.host, uri.port)
-      #http.
-    #end
+    def http
+      http = Net::HTTP.new(uri.host, uri.port)
+      configure_timeouts(http)
+
+      configure_ssl(http) if use_ssl?
+      http
+    end
 
     def post_headers(data)
       @headers['Content-Type']   ||= 'application/x-www-form-urlencoded'
       @headers['Content-Length'] ||= data.size.to_s
       @headers
+    end
+
+    def configure_ssl(http)
+      http.use_ssl     = true
+      http.verify_mode = verify_mode
+      http.cert        = client_certificate
+      http.ca_file     = ca_file
+    end
+
+    def configure_timeouts(http)
+      http.read_timeout = read_timeout
+      http.open_timeout = open_timeout
+    end
+
+    def configure_debugging(http)
+      http.set_debug_output(debugger_stream)
     end
   end
 end

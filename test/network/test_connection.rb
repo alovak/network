@@ -3,6 +3,7 @@ require 'test_helper'
 class TestConnection < Test::Unit::TestCase
   def setup
     @connection = Network::Connection.new("http://example.com/path")
+    @http = mock('http')
   end
 
   def test_network_exceptions
@@ -51,5 +52,60 @@ class TestConnection < Test::Unit::TestCase
 
     @connection.headers = excepted_headers
     @connection.post("data")
+  end
+
+  def test_configure_ssl_if_scheme_is_https
+    assert Network::Connection.new("https://example.com").use_ssl?
+    assert !Network::Connection.new("http://example.com").use_ssl?
+  end
+
+  def test_default_debug
+    assert_equal nil, @connection.debugger_stream
+  end
+
+  def test_change_debug
+    @connection.debugger_stream = STDOUT
+    assert_equal STDOUT, @connection.debugger_stream
+  end
+
+  def test_default_ssl_verify_mode
+    assert_equal Network::Connection::VERIFY_MODE, @connection.verify_mode
+  end
+
+  def test_ssl_verify_mode_param
+    @connection.verify_mode = OpenSSL::SSL::VERIFY_PEER
+    assert_equal OpenSSL::SSL::VERIFY_PEER, @connection.verify_mode
+  end
+
+  def test_set_client_ssl_certificate
+    cert = OpenSSL::X509::Certificate.new
+    @connection.client_certificate = cert
+    assert_equal cert, @connection.client_certificate
+  end
+
+  def test_timeouts_configuration
+    @http.expects(:read_timeout=)
+    @http.expects(:open_timeout=)
+    @connection.send(:configure_timeouts, @http)
+  end
+
+  def test_debugging_configuration
+    @http.expects(:set_debug_output)
+    @connection.send(:configure_debugging, @http)
+  end
+
+  def test_raise_error_if_invalid_client_certificate
+    e = assert_raise ArgumentError do
+      @connection.client_certificate = "certificate"
+    end
+  end
+
+  def test_ssl_configuration
+    @http.expects(:use_ssl=)
+    @http.expects(:verify_mode=)
+    @http.expects(:cert=)
+    @http.expects(:ca_file=)
+    
+    @connection.send(:configure_ssl, @http)
   end
 end

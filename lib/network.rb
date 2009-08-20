@@ -1,4 +1,4 @@
-require 'net/http'
+require 'net/https'
 require 'network/connection'
 module Network
   class Error < Exception
