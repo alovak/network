@@ -1,5 +1,3 @@
-require 'rubygems'
-
 Gem::Specification.new do |s|
   s.name         = "network"
   s.version      = "1.0.0"
