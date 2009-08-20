@@ -1,5 +1,57 @@
 require 'test_helper'
 
+class TestLogger
+  attr_reader :log
+
+  def method_missing(method, *args)
+    @log ||= ""
+    @log << "#{args.first}\n"
+  end
+end
+
+class TestConnectionLogging < Test::Unit::TestCase
+  def setup
+    @connection = Network::Connection.new("http://example.com/path")
+    @connection.logger = TestLogger.new
+  end
+
+  def test_log_request
+    @connection.send(:log_request, "request data")
+    log = @connection.logger.log
+
+    assert_match /POST http:\/\/example.com\/path/,  log
+    assert_match /--->/,                    log
+    assert_match /request data/,            log
+  end
+
+  def test_log_request_with_sender
+    @connection.sender = "ModuleName"
+    @connection.send(:log_request, "request data")
+    assert_match /ModuleName/, @connection.logger.log  
+  end
+
+  def test_log_response
+    @connection.send(:log_response, "response data")
+    log = @connection.logger.log
+
+    assert_match /<---/,                    log
+    assert_match /response data/,           log
+    assert_match /----/,                    log
+  end
+
+  def test_request_filtering
+    @connection.request_filter = Proc.new {|req| "#{req} is filtered"}
+    @connection.send(:log_request, "request")
+    assert_match /request is filtered/, @connection.logger.log
+  end
+
+  def test_response_filtering
+    @connection.response_filter = Proc.new {|req| "#{req} is filtered"}
+    @connection.send(:log_response, "response")
+    assert_match /response is filtered/, @connection.logger.log
+  end
+end
+
 class TestConnection < Test::Unit::TestCase
   def setup
     @connection = Network::Connection.new("http://example.com/path")

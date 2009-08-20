@@ -10,7 +10,18 @@ I wrote Network because I need the same functionality in many different places.
 == EXAMPLES:
 
   connection = Network::Connection.new("http://example.com/")
-  connection.post('one=1', {'Accept' => 'text/plain'})
+
+  connection.request_filter  = Proc.new {|req| req.gsub(/\d/, "X")}
+  connection.response_filter = Proc.new {|res| res.gsub(/\d/, "X")}
+
+  connection.post('one=1&two=2')
+
+== FEATURES:
+
+  * Request and response logging
+  * Request and response filtering
+  * easy SSL configuration
+  * Net::HTTP exceptions handling
 
 == REQUIREMENTS:
 

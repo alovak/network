@@ -4,7 +4,8 @@ module Network
 
     attr_accessor :read_timeout, :open_timeout, :headers, 
                   :verify_peer, :ca_file,
-                  :debugger_stream
+                  :debugger_stream,
+                  :logger, :request_filter, :response_filter, :sender
 
     READ_TIMEOUT = 60
     OPEN_TIMEOUT = 30 
@@ -22,6 +23,7 @@ module Network
 
     def post(data)
       begin
+        log_request(data)
         http.post(uri.path, data, post_headers(data))
       rescue Timeout::Error, Errno::ETIMEDOUT, Timeout::ExitException
         raise Error, "The connection to the remote server is timed out"
@@ -90,6 +92,23 @@ module Network
 
     def cert
       OpenSSL::X509::Certificate.new(pem)
+    end
+
+    def log(message)
+      logger.info(message) if logger
+    end
+
+    def log_request(data)
+      log sender if sender
+      log "POST #{uri}"
+      log "--->"
+      log (request_filter ? request_filter.call(data) : data)
+    end
+
+    def log_response(data)
+      log "<---"
+      log (response_filter ? response_filter.call(data) : data)
+      log "----"
     end
   end
 end
