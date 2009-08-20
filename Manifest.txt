@@ -1,7 +1,0 @@
-History.txt
-Manifest.txt
-README.txt
-Rakefile
-bin/network
-lib/network.rb
-test/test_network.rb
