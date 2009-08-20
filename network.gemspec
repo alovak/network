@@ -1,3 +1,5 @@
+# -*- encoding: utf-8 -*-
+ 
 Gem::Specification.new do |s|
   s.name         = "network"
   s.version      = "1.0.0"
@@ -11,6 +13,7 @@ Gem::Specification.new do |s|
   s.has_rdoc     = false
   s.files        = Dir['**/**'] 
   s.test_files   = Dir["test/**/test*.rb"]
+  s.rubygems_version = "1.3.0"
   s.add_dependency("mocha", ["= 0.9.7"])
   s.add_dependency("turn",  [">= 0.6.0"])
 end
