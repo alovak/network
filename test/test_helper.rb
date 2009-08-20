@@ -1,11 +1,5 @@
-require "rubygems"
-require "ruby-debug"
 require "test/unit"
 require "mocha"
-
-begin
-  require 'turn'
-rescue LoadError
-end
+require 'turn'
 
 require 'lib/network'

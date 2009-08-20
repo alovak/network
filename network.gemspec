@@ -13,5 +13,7 @@ Gem::Specification.new do |s|
   s.has_rdoc     = false
   s.files        = Dir['**/**'] 
   s.test_files   = Dir["test/**/test*.rb"]
+  s.add_dependency("mocha", ["= 0.9.7"])
+  s.add_dependency("turn",  [">= 0.6.0"])
 end
 
