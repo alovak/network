@@ -36,6 +36,14 @@ I wrote Network because I need the same functionality in many different places.
   * easy SSL configuration
   * Net::HTTP exceptions handling
 
+== INSTALLATION:
+
+  Run the following if you haven't already:
+  gem sources -a http://gems.github.com
+
+  Install the gem: 
+  sudo gem install alovak-network
+
 == REQUIREMENTS:
 
   Gems:

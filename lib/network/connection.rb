@@ -133,7 +133,7 @@ module Network
     end
 
     def log_request(data)
-      log sender if sender
+      log "[#{sender}]" if sender
       log "POST #{uri}"
       log "--->"
       log (request_filter ? request_filter.call(data) : data)
