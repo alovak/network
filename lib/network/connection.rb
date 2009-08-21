@@ -1,4 +1,18 @@
 module Network
+  class Error < Exception
+  end
+
+  class ResponseError < Error
+    attr_reader :response
+    def initialize(response)
+      @response = response
+    end
+
+    def to_s
+      "Failed with #{@response.code} #{@response.message if @response.respond_to?(:message)}"
+    end
+  end
+
   class Connection
     attr_reader   :uri, :pem
 
@@ -22,17 +36,14 @@ module Network
     end
 
     def post(data)
-      begin
+      try_request do
         log_request(data)
-        http.post(uri.path, data, post_headers(data))
-      rescue Timeout::Error, Errno::ETIMEDOUT, Timeout::ExitException
-        raise Error, "The connection to the remote server is timed out"
-      rescue EOFError
-        raise Error, "The connection to the remote server was dropped"
-      rescue Errno::ECONNRESET, Errno::ECONNABORTED
-        raise Error, "The remote server reset the connection"
-      rescue Errno::ECONNREFUSED
-        raise Error, "The connection was refused by the remote server"
+        response = nil
+        ms = Benchmark.realtime do 
+          response = http.post(uri.path, data, post_headers(data))
+        end
+        log_response(response, ms)
+        handle_response(response)
       end
     end
 
@@ -55,9 +66,32 @@ module Network
       http
     end
 
+    def handle_response(response)
+      case response.code.to_i
+      when 200...300
+        response.body
+      else
+        raise ResponseError.new(response)
+      end
+    end
+
+    def try_request(&block)
+      begin
+        block.call
+      rescue Timeout::Error, Errno::ETIMEDOUT, Timeout::ExitException
+        raise Error, "The connection to the remote server is timed out"
+      rescue EOFError
+        raise Error, "The connection to the remote server was dropped"
+      rescue Errno::ECONNRESET, Errno::ECONNABORTED
+        raise Error, "The remote server reset the connection"
+      rescue Errno::ECONNREFUSED
+        raise Error, "The connection was refused by the remote server"
+      end
+    end
+
     def post_headers(data)
       @headers['Content-Type']   ||= 'application/x-www-form-urlencoded'
-      @headers['Content-Length'] ||= data.size.to_s
+      @headers['Content-Length'] ||= data.bytesize.to_s
       @headers
     end
 
@@ -105,9 +139,9 @@ module Network
       log (request_filter ? request_filter.call(data) : data)
     end
 
-    def log_response(data)
-      log "<---"
-      log (response_filter ? response_filter.call(data) : data)
+    def log_response(response, ms_time = -1)
+      log "<-- %s %s (%d bytes %.2fms)" % [response.code, response.message, (response.body ? response.body.bytesize : 0), ms_time]
+      log (response_filter ? response_filter.call(response.body) : response.body) if response.body
       log "----"
     end
   end

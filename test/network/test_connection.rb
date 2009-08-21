@@ -9,7 +9,10 @@ class TestLogger
   end
 end
 
+ResponseStub = Struct.new(:code, :message, :body)
+
 class TestConnectionLogging < Test::Unit::TestCase
+
   def setup
     @connection = Network::Connection.new("http://example.com/path")
     @connection.logger = TestLogger.new
@@ -31,10 +34,11 @@ class TestConnectionLogging < Test::Unit::TestCase
   end
 
   def test_log_response
-    @connection.send(:log_response, "response data")
+    response = ResponseStub.new("200", "OK", "response data")
+    @connection.send(:log_response, response, 0.16)
     log = @connection.logger.log
 
-    assert_match /<---/,                    log
+    assert_match /<-- 200 OK \(13 bytes 0.16ms\)/,    log
     assert_match /response data/,           log
     assert_match /----/,                    log
   end
@@ -46,13 +50,15 @@ class TestConnectionLogging < Test::Unit::TestCase
   end
 
   def test_response_filtering
+    response = ResponseStub.new("200", "OK", "response")
     @connection.response_filter = Proc.new {|req| "#{req} is filtered"}
-    @connection.send(:log_response, "response")
+    @connection.send(:log_response, response)
     assert_match /response is filtered/, @connection.logger.log
   end
 end
 
 class TestConnection < Test::Unit::TestCase
+
   def setup
     @connection = Network::Connection.new("http://example.com/path")
     @http = mock('http')
@@ -65,12 +71,35 @@ class TestConnection < Test::Unit::TestCase
       { :class => Errno::ECONNABORTED,  :message => "The remote server reset the connection"},
       { :class => Errno::ECONNREFUSED,  :message => "The connection was refused by the remote server"},
     ].each do |exception|
-      Net::HTTP.any_instance.expects(:request).raises exception[:class]
       e = assert_raise Network::Error do
-        @connection.post("some data")
+        @connection.send(:try_request) do
+          raise exception[:class]
+        end
       end
       assert_equal exception[:message], e.message
     end
+  end
+
+  def test_post_methods
+    sec = sequence('order')
+    @connection.expects(:log_request).in_sequence(sec)
+    @connection.expects(:http).in_sequence(sec).returns(stub('http', :post => true))
+    @connection.expects(:log_response).in_sequence(sec)
+    @connection.expects(:handle_response).in_sequence(sec)
+
+    @connection.post("hello")
+  end
+
+  def test_response_handler_raises_response_error_if_response_code_not_in_200_299
+    [300, 400, 500].each do |code|
+      assert_raise Network::ResponseError do
+        @connection.send(:handle_response, ResponseStub.new(code))
+      end
+    end
+  end
+
+  def test_response_handler_returns_response_body_if_response_code_200_299
+    assert_equal "response", @connection.send(:handle_response, ResponseStub.new(200, "OK", "response"))
   end
 
   def test_default_timeouts
@@ -86,24 +115,21 @@ class TestConnection < Test::Unit::TestCase
   end
 
   def test_default_headers_for_post_request
-    Net::HTTP.any_instance.expects(:post).with("/path", "data", 
-                                               { 'Content-Type'   => 'application/x-www-form-urlencoded',
-                                                 'Content-Length' => '4' })
-    @connection.post("data")
+    expected_headers = { 'Content-Type'   => 'application/x-www-form-urlencoded',
+                         'Content-Length' => '4' }
+
+    assert_equal expected_headers, @connection.send(:post_headers, "data")
   end
 
   def test_user_headers_are_not_overwrited_by_default_headers
-    excepted_headers = {
-      'Content-Type' => 'application/xml',
-      'Accept'       => 'text/plain'
-    }
+    user_headers = { 'Content-Type' => 'application/xml', 
+                     'Accept'       => 'text/plain' }
 
-    Net::HTTP.any_instance.expects(:post).with("/path",
-                                               "data", 
-                                               excepted_headers.update('Content-Length' => '4'))
+    expected_headers = { 'Content-Length' => '4' }.update(user_headers)
+    
+    @connection.headers = user_headers
 
-    @connection.headers = excepted_headers
-    @connection.post("data")
+    assert_equal expected_headers, @connection.send(:post_headers, "data")
   end
 
   def test_configure_ssl_if_scheme_is_https
