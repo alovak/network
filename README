@@ -9,12 +9,25 @@ I wrote Network because I need the same functionality in many different places.
 
 == EXAMPLES:
 
-  connection = Network::Connection.new("http://example.com/")
+  Fast:
+    
+    require 'network'
 
-  connection.request_filter  = Proc.new {|req| req.gsub(/\d/, "X")}
-  connection.response_filter = Proc.new {|res| res.gsub(/\d/, "X")}
+    body = Network.post("http://example.com/", "escaped_data")
 
-  connection.post('one=1&two=2')
+  With configuration:
+
+    require 'network'
+
+    connection = Network::Connection.new("http://example.com/")
+
+    connection.request_filter  = Proc.new {|req| req.gsub(/\d/, "X")}
+    connection.response_filter = Proc.new {|res| res.gsub(/\d/, "X")}
+
+    # server requires client certificate verification 
+    c.pem_file = 'client.pem'
+    
+    connection.post('one=1&two=2')
 
 == FEATURES:
 

@@ -1,7 +1,5 @@
-require 'test/unit'
 require 'rubygems'
-require 'ruby-debug'
+require 'test/unit'
 require 'mocha'
-require 'turn'
 
 require 'lib/network'
