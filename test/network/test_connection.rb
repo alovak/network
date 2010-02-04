@@ -85,21 +85,8 @@ class TestConnection < Test::Unit::TestCase
     @connection.expects(:log_request).in_sequence(sec)
     @connection.expects(:http).in_sequence(sec).returns(stub('http', :post => true))
     @connection.expects(:log_response).in_sequence(sec)
-    @connection.expects(:handle_response).in_sequence(sec)
 
     @connection.post("hello")
-  end
-
-  def test_response_handler_raises_response_error_if_response_code_not_in_200_299
-    [300, 400, 500].each do |code|
-      assert_raise Network::ResponseError do
-        @connection.send(:handle_response, ResponseStub.new(code))
-      end
-    end
-  end
-
-  def test_response_handler_returns_response_body_if_response_code_200_299
-    assert_equal "response", @connection.send(:handle_response, ResponseStub.new(200, "OK", "response"))
   end
 
   def test_default_timeouts

@@ -43,7 +43,7 @@ module Network
           response = http.post(uri.path, data, post_headers(data))
         end
         log_response(response, ms)
-        handle_response(response)
+        response
       end
     end
 
@@ -64,15 +64,6 @@ module Network
 
       configure_ssl(http) if use_ssl?
       http
-    end
-
-    def handle_response(response)
-      case response.code.to_i
-      when 200...300
-        response.body
-      else
-        raise ResponseError.new(response)
-      end
     end
 
     def try_request(&block)
