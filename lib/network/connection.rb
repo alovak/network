@@ -49,7 +49,7 @@ module Network
 
     def post(data)
       try_request do
-        log_request(data)
+        log_request(data, "POST")
         response = nil
         ms = Benchmark.realtime do 
           response = http.post(uri.path, data, post_headers(data))
@@ -59,6 +59,19 @@ module Network
       end
     end
 
+    def get(data)
+      try_request do
+        log_request(data, "GET")
+        response = nil
+        query_string = uri.path + data
+        ms = Benchmark.realtime do 
+          response = http.get(query_string)
+        end
+        log_response(response, ms)
+        response
+      end
+    end
+    
     def use_ssl?
       @uri.scheme == "https"
     end
@@ -135,9 +148,9 @@ module Network
       logger.info(message) if logger
     end
 
-    def log_request(data)
+    def log_request(data, method)
       log "[#{sender}]" if sender
-      log "POST #{uri}"
+      log "#{method} #{uri}"
       log "--->"
       log (request_filter ? request_filter.call(data) : data)
     end

@@ -19,7 +19,7 @@ class TestConnectionLogging < Test::Unit::TestCase
   end
 
   def test_log_request
-    @connection.send(:log_request, "request data")
+    @connection.send(:log_request, "request data", "POST")
     log = @connection.logger.log
 
     assert_match /POST http:\/\/example.com\/path/,  log
@@ -29,7 +29,7 @@ class TestConnectionLogging < Test::Unit::TestCase
 
   def test_log_request_with_sender
     @connection.sender = "ModuleName"
-    @connection.send(:log_request, "request data")
+    @connection.send(:log_request, "request data", "POST")
     assert_match /ModuleName/, @connection.logger.log  
   end
 
@@ -45,7 +45,7 @@ class TestConnectionLogging < Test::Unit::TestCase
 
   def test_request_filtering
     @connection.request_filter = Proc.new {|req| "#{req} is filtered"}
-    @connection.send(:log_request, "request")
+    @connection.send(:log_request, "request", "POST")
     assert_match /request is filtered/, @connection.logger.log
   end
 
@@ -89,6 +89,15 @@ class TestConnection < Test::Unit::TestCase
     @connection.post("hello")
   end
 
+  def test_get_methods
+    sec = sequence('order')
+    @connection.expects(:log_request).in_sequence(sec)
+    @connection.expects(:http).in_sequence(sec).returns(stub('http', :get => true))
+    @connection.expects(:log_response).in_sequence(sec)
+    
+    @connection.get("query=hello")
+  end
+  
   def test_default_timeouts
     assert_equal Network::Connection::READ_TIMEOUT, @connection.read_timeout
     assert_equal Network::Connection::OPEN_TIMEOUT, @connection.open_timeout
