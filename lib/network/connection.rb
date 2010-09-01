@@ -16,13 +16,13 @@ module Network
   class Connection
     attr_reader   :uri, :pem
 
-    attr_accessor :read_timeout, :open_timeout, :headers,
+    attr_accessor :read_timeout, :open_timeout, :headers, 
                   :verify_peer, :ca_file,
                   :debugger_stream,
                   :logger, :request_filter, :response_filter, :sender
 
     READ_TIMEOUT = 60
-    OPEN_TIMEOUT = 30
+    OPEN_TIMEOUT = 30 
     VERIFY_NONE  = OpenSSL::SSL::VERIFY_NONE
     VERIFY_PEER  = OpenSSL::SSL::VERIFY_PEER
 
@@ -51,7 +51,7 @@ module Network
       try_request do
         log_request(data, "POST")
         response = nil
-        ms = Benchmark.realtime do
+        ms = Benchmark.realtime do 
           response = http.post(uri.path, data, post_headers(data))
         end
         log_response(response, ms)
@@ -63,15 +63,15 @@ module Network
       try_request do
         log_request(data, "GET")
         response = nil
-        query_string = uri.path + '?' + data
-        ms = Benchmark.realtime do
+        query_string = uri.path + data
+        ms = Benchmark.realtime do 
           response = http.get(query_string)
         end
         log_response(response, ms)
         response
       end
     end
-
+    
     def use_ssl?
       @uri.scheme == "https"
     end
