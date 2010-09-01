@@ -26,13 +26,25 @@ module Network
     VERIFY_NONE  = OpenSSL::SSL::VERIFY_NONE
     VERIFY_PEER  = OpenSSL::SSL::VERIFY_PEER
 
-    def initialize(uri)
+    # options are:
+    #   :read_timeout
+    #   :open_timeout
+    #   :verify_peer
+    #   :proxy_addr
+    #   :proxy_port
+    #   :proxy_user
+    #   :proxy_pass
+    def initialize(uri, options = {})
       @uri = URI.parse(uri)
-      @read_timeout = READ_TIMEOUT
-      @open_timeout = OPEN_TIMEOUT
-      @verify_peer  = false
+      @read_timeout = options[:read_timeout] || READ_TIMEOUT
+      @open_timeout = options[:open_timeout] || OPEN_TIMEOUT
+      @verify_peer  = options[:verify_peer] || false
       @debugger_stream = nil
       @headers = {}
+      @proxy_addr = options[:proxy_addr]
+      @proxy_port = options[:proxy_port]
+      @proxy_user = options[:proxy_user]
+      @proxy_pass = options[:proxy_pass]
     end
 
     def post(data)
@@ -58,7 +70,7 @@ module Network
     private
 
     def http
-      http = Net::HTTP.new(uri.host, uri.port)
+      http = Net::HTTP.new(uri.host, uri.port, @proxy_addr, @proxy_port, @proxy_user, @proxy_pass)
       configure_timeouts(http)
       configure_debugging(http)
 

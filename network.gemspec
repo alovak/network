@@ -2,7 +2,7 @@
  
 Gem::Specification.new do |s|
   s.name         = "alovak-network"
-  s.version      = "1.1.4"
+  s.version      = "1.1.5"
   s.author       = "Pavel Gabriel"
   s.homepage     = "http://github.com/alovak/network/"
   s.summary      = "HTTP/HTTPS communication module based on ruby net/http, net/https modules"
