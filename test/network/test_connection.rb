@@ -57,6 +57,40 @@ class TestConnectionLogging < Test::Unit::TestCase
   end
 end
 
+class TestConnectionWithParamsInURI < Test::Unit::TestCase
+  def setup
+    @connection = Network::Connection.new("http://example.com/path?route=some/where/else")
+    @http = mock('http')
+  end
+
+  def test_post_methods
+    sec = sequence('order')
+
+    default_headers = { 'Content-Type'   => 'application/x-www-form-urlencoded',
+                        'Content-Length' => 'hello&route=some/where/else'.bytesize.to_s }
+
+    @http.expects(:post).with('/path', 'hello&route=some/where/else', default_headers) 
+
+    @connection.expects(:log_request).in_sequence(sec)
+    @connection.expects(:http).in_sequence(sec).returns(@http)
+    @connection.expects(:log_response).in_sequence(sec)
+
+    @connection.post("hello")
+  end
+
+  def test_get_methods
+    sec = sequence('order')
+
+    @http.expects(:get).with('/path?query=hello&route=some/where/else') 
+
+    @connection.expects(:log_request).in_sequence(sec)
+    @connection.expects(:http).in_sequence(sec).returns(@http)
+    @connection.expects(:log_response).in_sequence(sec)
+
+    @connection.get("query=hello")
+  end
+end
+
 class TestConnection < Test::Unit::TestCase
 
   def setup
@@ -82,8 +116,14 @@ class TestConnection < Test::Unit::TestCase
 
   def test_post_methods
     sec = sequence('order')
+
+    default_headers = { 'Content-Type'   => 'application/x-www-form-urlencoded',
+                        'Content-Length' => 'hello'.bytesize.to_s }
+
+    @http.expects(:post).with('/path', 'hello', default_headers) 
+
     @connection.expects(:log_request).in_sequence(sec)
-    @connection.expects(:http).in_sequence(sec).returns(stub('http', :post => true))
+    @connection.expects(:http).in_sequence(sec).returns(@http)
     @connection.expects(:log_response).in_sequence(sec)
 
     @connection.post("hello")

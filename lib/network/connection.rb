@@ -49,6 +49,8 @@ module Network
 
     def post(data)
       try_request do
+        data = post_data(data)
+
         log_request(data, "POST")
         response = nil
         ms = Benchmark.realtime do 
@@ -61,9 +63,11 @@ module Network
 
     def get(data)
       try_request do
+        data = post_data(data)
+
         log_request(data, "GET")
         response = nil
-        query_string = uri.path + data
+        query_string = uri.path + "?" + data
         ms = Benchmark.realtime do 
           response = http.get(query_string)
         end
@@ -109,6 +113,10 @@ module Network
       @headers['Content-Type']   ||= 'application/x-www-form-urlencoded'
       @headers['Content-Length'] ||= data.bytesize.to_s
       @headers
+    end
+
+    def post_data(data)
+      uri.query ? [data, uri.query].join("&") : data
     end
 
     def configure_ssl(http)
